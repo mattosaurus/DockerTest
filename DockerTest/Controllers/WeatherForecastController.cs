@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace DockerTest.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
     public class WeatherForecastController : ControllerBase
     {
         private static readonly string[] Summaries = new[]
@@ -18,7 +17,7 @@ namespace DockerTest.Controllers
             _logger = logger;
         }
 
-        [HttpGet(Name = "GetWeatherForecast")]
+        [HttpGet("[controller]/")]
         public IEnumerable<WeatherForecast> Get()
         {
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
