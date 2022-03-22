@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
+using Prometheus;
 using Serilog;
 using Serilog.Events;
 using System;
@@ -80,7 +81,8 @@ namespace DockerTest
 
             services.AddHealthChecks()
                 .AddCheck<MetOfficeDataPointHealthCheck>("MetOfficeDataPoint")
-                .AddCheck<IpStackHealthCheck>("IpStack");
+                .AddCheck<IpStackHealthCheck>("IpStack")
+                .ForwardToPrometheus();
         }
 
         private static void BuildApp(WebApplication app)
@@ -100,6 +102,14 @@ namespace DockerTest
             app.UseAuthorization();
 
             app.MapControllers();
+
+            app.UseRouting();
+            app.UseHttpMetrics();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapMetrics();
+            });
         }
 
         static Task WriteResponse(HttpContext context, HealthReport healthReport)
