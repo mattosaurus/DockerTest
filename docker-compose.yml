@@ -1,0 +1,25 @@
+services:
+  dockertest:
+    build: .
+    container_name: dockertestcontainer
+    image: dockertest
+    ports:
+      - 8000:80
+    networks:
+      - dockertestnetwork
+
+  prometheus:
+    image: prom/prometheus
+    restart: always
+    ports:
+      - 9090:9090
+    links:
+      - dockertest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - dockertestnetwork
+
+### put all the networks here
+networks:
+  dockertestnetwork:

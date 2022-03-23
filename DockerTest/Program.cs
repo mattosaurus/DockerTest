@@ -1,5 +1,5 @@
 using DockerTest.Features.HealthCheck;
-using IpStack.Extensions;
+using IpRegistry.Extensions;
 using MetOfficeDataPoint.Extensions;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Configuration;
@@ -77,11 +77,14 @@ namespace DockerTest
             services.AddSwaggerGen();
 
             services.AddMetOfficeDataPointService(Configuration["MetOfficeDataPoint:ApiKey"]);
-            services.AddIpStack(Configuration["IpStack:ApiKey"]);
+            services.AddIpRegistry(options =>
+            {
+                options.ApiKey = Configuration["IpRegistry:ApiKey"];
+            });
 
             services.AddHealthChecks()
                 .AddCheck<MetOfficeDataPointHealthCheck>("MetOfficeDataPoint")
-                .AddCheck<IpStackHealthCheck>("IpStack")
+                .AddCheck<IpRegistryHealthCheck>("IpStack")
                 .ForwardToPrometheus();
         }
 

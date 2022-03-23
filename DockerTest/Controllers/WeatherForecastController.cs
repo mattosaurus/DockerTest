@@ -1,5 +1,6 @@
-using IpStack;
-using IpStack.Services;
+using IpRegistry;
+using IpRegistry.Models;
+using IpRegistry.Services;
 using MetOfficeDataPoint.Models;
 using MetOfficeDataPoint.Models.GeoCoordinate;
 using MetOfficeDataPoint.Services;
@@ -12,23 +13,23 @@ namespace DockerTest.Controllers
     {
         private readonly ILogger<WeatherForecastController> _logger;
         private readonly IMetOfficeDataPointService _metOfficeDataPointService;
-        private readonly IIpStackService _ipStackService;
+        private readonly IIpRegistryService _ipRegistryService;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger, IMetOfficeDataPointService metOfficeDataPointService, IIpStackService ipStackService)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, IMetOfficeDataPointService metOfficeDataPointService, IIpRegistryService ipRegistryService)
         {
             _logger = logger;
-            _ipStackService = ipStackService;
+            _ipRegistryService = ipRegistryService;
             _metOfficeDataPointService = metOfficeDataPointService;
         }
 
         [HttpGet("[controller]/")]
         public async Task<ForecastResponse3Hourly> Get()
         {
-            IpStack.Models.IpAddressDetails ipLocation = await _ipStackService.GetIpAddressDetailsAsync();
+            IpAddressDetails ipAddress = await _ipRegistryService.GetIpAddressDetailsAsync();
 
-            GeoCoordinate coordinate = new GeoCoordinate(ipLocation.Latitude, ipLocation.Longitude);
+            GeoCoordinate coordinate = new GeoCoordinate(ipAddress.Location.Latitude, ipAddress.Location.Longitude);
 
-            Location siteLocation = await _metOfficeDataPointService.GetClosestSiteAsync(coordinate);
+            MetOfficeDataPoint.Models.Location siteLocation = await _metOfficeDataPointService.GetClosestSiteAsync(coordinate);
 
             ForecastResponse3Hourly forecastResponse = await _metOfficeDataPointService.GetForecasts3HourlyAsync(siteLocation.ID);
 
