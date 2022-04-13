@@ -2,18 +2,14 @@ using DockerTest.Features.HealthCheck;
 using IpRegistry.Extensions;
 using MetOfficeDataPoint.Extensions;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Logging;
 using Prometheus;
 using Serilog;
 using Serilog.Events;
-using System;
-using System.IO;
+using System.Net;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace DockerTest
 {
@@ -62,8 +58,27 @@ namespace DockerTest
                 .WriteTo.Console()
                 .ReadFrom.Configuration(context.Configuration));
 
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Listen(IPAddress.Any, 8880, listenOptions =>
+                {
+                    listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+                    listenOptions.UseHttps();
+                });
+                options.Listen(IPAddress.Any, 7183, listenOptions =>
+                {
+                    listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+                    listenOptions.UseHttps();
+                });
+                options.Listen(IPAddress.Any, 5183, listenOptions =>
+                {
+                    listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+                });
+            });
+
             BuildServices(builder.Services);
             var app = builder.Build();
+
             BuildApp(app);
 
             app.Run();
@@ -93,7 +108,7 @@ namespace DockerTest
             app.MapHealthChecks("/healthcheck", new HealthCheckOptions
             {
                 ResponseWriter = WriteResponse
-            });
+            }).RequireHost("*:8880");
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -107,7 +122,11 @@ namespace DockerTest
             app.MapControllers();
 
             app.UseRouting();
-            app.UseHttpMetrics();
+
+            app.UseWhen(context => context.Request.Path.StartsWithSegments("/weatherforecast"), appBuilder =>
+            {
+                appBuilder.UseHttpMetrics();
+            });
 
             app.UseEndpoints(endpoints =>
             {
