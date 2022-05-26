@@ -76,6 +76,10 @@ namespace DockerTest
                 });
             });
 
+            builder.Services.AddHealthChecks()
+                .AddSqlServer(
+                    builder.Configuration.GetConnectionString("DefaultConnection"));
+
             BuildServices(builder.Services);
             var app = builder.Build();
 
